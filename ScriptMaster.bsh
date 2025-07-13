@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+source ~/bin/toolbox.bsh
+
+start_logging
+log "Running health checks"
+check_containers
+check_shares
+scan_lan
+end_logging

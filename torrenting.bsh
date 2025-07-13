@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Source and destination directories
+SOURCE_DIR="/srv/dev-disk-by-uuid-69c2e9c1-6aec-44f0-a3ad-074de49b4789/downloads/torrents_completed"
+DEST_DIR="/srv/dev-disk-by-uuid-69c2e9c1-6aec-44f0-a3ad-074de49b4789/myNAS/data/media/games"
+
+# Do some sanity checking. Do all the relative directories exist, if not do something about it...maybe
+
+if [ ! -d "${SOURCE_DIR}" ]; then
+       
+    echo "Nothing to check. Source directory does not exist"
+
+    exit 0
+
+fi
+
+mkdir -p "$DEST_DIR"
+
+# Find all directories in the source (excluding files) and iterate over them
+find "$SOURCE_DIR" -type d | while read -r dir; do
+    # Get the relative path of the directory within the source directory
+    relative_dir="${dir#$SOURCE_DIR/}"
+
+    # Define the destination directory path
+    dest_dir="$DEST_DIR/$relative_dir"
+
+    # Check if the directory does not exist in the destination
+    if [ ! -d "$dest_dir" ]; then
+        echo "New directory found: $relative_dir"
+        
+        # Create the directory in the destination
+        # mkdir -p "$dest_dir"
+
+        # Optionally, copy the contents (if you want to copy files as well)
+        # cp -r "$dir/"* "$dest_dir/"
+    fi
+done

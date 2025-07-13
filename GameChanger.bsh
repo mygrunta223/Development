@@ -1,0 +1,19 @@
+#!/bin/bash
+
+directories=("/path/to/source/directory1" "/path/to/source/directory2")
+
+for directory in "${directories[@]}"; do
+    # Check if the directory exists
+    if [ -d "$directory" ]; then
+        # Enumerate files and directories
+        while IFS= read -r -d '' oldName; do
+            newName=$(echo "$oldName" | sed 's/[]/\\\\&/g')
+            if [ "$oldName" != "$newName" ]; then
+                echo "Renaming '$oldName' to '$newName'"
+               # mv "$oldName" "$newName"
+            fi
+        done < <(find "$directory" -name '*[' -type f -print0)
+    else
+        echo "Directory '$directory' does not exist."
+    fi
+done

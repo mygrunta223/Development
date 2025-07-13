@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+source ~/bin/logger.bsh
+start_logging
+
+# --- Container Health Check ---
+check_containers() {
+    log "Checking Docker containers..."
+    CONTAINERS=(jellyfin nextcloud homepage)
+    for c in "${CONTAINERS[@]}"; do
+        if ! docker ps --format '{{.Names}}' | grep -qw "$c"; then
+            log "[ERROR] Container '$c' is NOT running!"
+        else
+            log "[OK] Container '$c' is running."
+        fi
+    done
+}
+
+# --- Network Share Verification ---
+check_shares() {
+    log "Checking mounted network shares..."
+    SHARES=("/mnt/media" "/mnt/nextcloud")
+    for s in "${SHARES[@]}"; do
+        if mountpoint -q "$s"; then
+            log "[OK] Share '$s' is mounted."
+        else
+            log "[ERROR] Share '$s' is NOT mounted!"
+        fi
+    done
+}
+
+# --- LAN Port Scanner ---
+scan_lan() {
+    log "Scanning local network for devices..."
+    LAN_SUBNET="192.168.1.0/24"
+    nmap -sn "$LAN_SUBNET" | grep "Nmap scan report" | while read -r line; do
+        log "[LAN DEVICE] $line"
+    done
+}
+
+# --- Usage Instructions ---
+usage() {
+    echo "Usage: $0 [-c] [-s] [-l] [-a]"
+    echo "  -c    Check containers"
+    echo "  -s    Check network shares"
+    echo "  -l    Scan LAN"
+    echo "  -a    Run all checks"
+    exit 1
+}
+
+# --- Main ---
+if [ $# -eq 0 ]; then
+    usage
+fi
+
+while getopts ":csla" opt; do
+    case $opt in
+        c) check_containers ;;
+        s) check_shares ;;
+        l) scan_lan ;;
+        a)
+            check_containers
+            check_shares
+            scan_lan
+            ;;
+        *) usage ;;
+    esac
+done
+
+log "SystemHealthCheck.bsh complete."
+end_logging

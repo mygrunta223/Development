@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+source ~/bin/logger.bsh
+source ~/bin/health_functions.bsh
+
+start_logging
+log "Starting System Health Check"
+
+usage() {
+    echo "Usage: $0 [-c] [-s] [-l] [-a]"
+    echo "  -c    Check containers"
+    echo "  -s    Check network shares"
+    echo "  -l    Scan LAN"
+    echo "  -a    Run all checks"
+    exit 1
+}
+
+if [ $# -eq 0 ]; then
+    usage
+fi
+
+while getopts ":csla" opt; do
+    case $opt in
+        c) check_containers ;;
+        s) check_shares ;;
+        l) scan_lan ;;
+        a)
+            check_containers
+            check_shares
+            scan_lan
+            ;;
+        *) usage ;;
+    esac
+done
+
+log "System Health Check Complete"
+end_logging

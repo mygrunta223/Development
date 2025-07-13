@@ -1,0 +1,54 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+# Configuration
+SOURCE_DIR="${1:-/source/path}"
+FINAL_DIR="${2:-/final/path}"
+PATTERN="[FitGirl Repack]"
+MAX_AGE="${3:-86400}"  # Default: 24 hours
+
+# Setup logging
+LOG_FILE="/var/log/dir_move.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+
+# Helper function for logging
+log() {
+    local timestamp=$(date +"%Y-%m-%d %H:%M:%S")
+    echo "[$timestamp] $*" >> "$LOG_FILE"
+}
+
+# Find and process directories
+find "$SOURCE_DIR" -type d \
+    -name "$PATTERN" \
+    -mmin "-$MAX_AGE" \
+    -exec sh -c '
+        for dir; do
+            # Get directory name
+            dir_name="$(basename "$dir")"
+            
+            # Construct destination path
+            dest_path="$FINAL_DIR/$dir_name"
+            
+            # Check if destination exists
+            if [ -d "$dest_path" ]; then
+                log "Skipping $dir_name: destination already exists"
+                continue
+            fi
+            
+            # Copy directory and contents
+            if ! cp -R "$dir" "$FINAL_DIR/"; then
+                log "Error copying $dir_name: $?"
+                continue
+            fi
+            
+            log "Successfully copied $dir_name to $FINAL_DIR"
+            
+            # Delete source directory if copy was successful
+            if rm -rf "$dir"; then
+                log "Successfully removed source directory $dir_name"
+            else
+                log "Failed to remove source directory $dir_name: $?"
+            fi
+        done  # <--- This is the missing done statement
+    ' sh {} +
